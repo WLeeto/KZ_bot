@@ -18,7 +18,6 @@ def start(message):
     bot.send_message(message.chat.id, "Я умею быстро конвертировать валюты.\n"
                                       "Это очень помогает освоиться с новой валютой\n"
                                       "Примерно представить сколько что стоит в рублях")
-    init_storage(message.from_user.id)
     keep_going(message)
 
 def keep_going(message):
@@ -54,7 +53,7 @@ def input(message):
         bot.send_message(message.chat.id, "Такой команды я не знаю")
         keep_going(message)
 
-def init_storage(user_id):
+def _init_storage(user_id):
   storage[user_id] = dict(KZT=None, RUB=None)
 
 def store_number(user_id, key, value):
@@ -67,29 +66,29 @@ def what_course(message):
     '''
     Считаем курс обмена
     '''
-    KZT = _replace(message.text)
     try:
-        float(KZT)
+        _init_storage(message.from_user.id)
+        KZT = float(_replace(message.text))
+
         store_number(message.from_user.id, "KZT", KZT)
         bot.send_message(message.chat.id, 'Сколько RUB списалось ?')
         bot.register_next_step_handler(message, what_course_2)
     except Exception:
-        bot.send_message(message.chat.id, 'Похоже вы ввели не число =\\')
+        bot.send_message(message.chat.id, "Что то пошло не так\n"
+                                          "Возможно вы ввели не число")
         keep_going(message)
 
-
 def what_course_2(message):
-    RUB = _replace(message.text)
     try:
-        float(RUB)
-        course = float(get_number(message.from_user.id, "KZT")) / float(RUB)
+        RUB = _replace(message.text)
+        course = get_number(message.from_user.id, "KZT") / float(RUB)
         course = round(course, 1)
         bot.send_message(message.chat.id, f'Похоже вы обменяли по курсу {course}')
         keep_going(message)
     except Exception:
-        bot.send_message(message.chat.id, 'Похоже вы ввели не число =\\')
+        bot.send_message(message.chat.id, "Что то пошло не так\n"
+                                          "Возможно вы ввели не число")
         keep_going(message)
-
 
 def convert_rub_to_kz_cb(message):
     '''
@@ -143,7 +142,6 @@ def count_kzt(message):
 def _replace(arg):
     replaced_arg = arg.replace(" ", "").replace(",", ".")
     return replaced_arg
-
 
 
 bot.polling(none_stop=True)
